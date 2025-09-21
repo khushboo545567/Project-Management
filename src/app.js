@@ -15,4 +15,9 @@ app.use(
     allowedHeaders: ["Content-Type", "Authorization"],
   }),
 );
+
+// IMPORTS ROUTES
+import helthCheckRouter from "./routes/helthcheck.route.js";
+app.use("/api/v1/helthcheck", helthCheckRouter);
+
 export default app;
