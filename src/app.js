@@ -18,6 +18,8 @@ app.use(
 
 // IMPORTS ROUTES
 import helthCheckRouter from "./routes/helthcheck.route.js";
+import authRouter from "./routes/auth.routes.js";
 app.use("/api/v1/helthcheck", helthCheckRouter);
+app.use("/api/v1/auth", authRouter);
 
 export default app;
