@@ -1,0 +1,26 @@
+import { body } from "express-validator";
+
+const userRegisterValidator = () => {
+  return [
+    body("email")
+      .trim()
+      .notEmpty()
+      .withMessage("Email is required")
+      .isEmail()
+      .withMessage("Email is invalid"),
+    body("userName")
+      .trim()
+      .notEmpty()
+      .withMessage("user name is required")
+      .isLength({ min: 3 })
+      .withMessage("user name must be atleast 3 characters"),
+    body("password")
+      .trim()
+      .notEmpty()
+      .withMessage("password is required")
+      .isLength({ min: 8 })
+      .withMessage("the password should be at least length 8"),
+  ];
+};
+
+export { userRegisterValidator };
