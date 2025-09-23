@@ -3,7 +3,7 @@ import mongoose from "mongoose";
 import jwt from "jsonwebtoken";
 import crypto from "crypto";
 
-const userSchema = mongoose.Schema(
+const userSchema = new mongoose.Schema(
   {
     avatar: {
       type: {
@@ -60,7 +60,7 @@ const userSchema = mongoose.Schema(
 
 userSchema.pre("save", async function (next) {
   // only run this if the password gets changed otherwise not
-  if (!is.isModified("password")) return next();
+  if (!this.isModified("password")) return next();
   this.password = await bcrypt.hash(this.password, 10);
   next();
 });
@@ -83,7 +83,7 @@ userSchema.methods.generateAccessToken = function () {
 };
 
 userSchema.methods.generateRefreshToken = function () {
-  jwt.sign({ _id: this._id }, process.env.REFRESH_TOKEN_SECRET, {
+  return jwt.sign({ _id: this._id }, process.env.REFRESH_TOKEN_SECRET, {
     expiresIn: process.env.REFRESH_TOKEN_EXPIRY,
   });
 };

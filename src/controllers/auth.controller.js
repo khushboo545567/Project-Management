@@ -20,6 +20,7 @@ const generateAccessAndRefreshToken = async (userId) => {
     );
   }
 };
+console.log("hii from the auth controller");
 const registerUser = asyncHandler(async (req, res) => {
   const { email, userName, fullName, password, role } = req.body;
 
@@ -42,6 +43,7 @@ const registerUser = asyncHandler(async (req, res) => {
     isEmailVerified: false,
   });
 
+  console.log(user);
   // to verify the email generate the temp token
   const { unHashedToken, hashedToken, tokenExpiry } =
     user.generateTemporaryToken();

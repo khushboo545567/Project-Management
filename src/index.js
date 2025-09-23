@@ -9,7 +9,7 @@ const port = process.env.PORT || 300;
 connectDB()
   .then(() => {
     app.listen(port, () => {
-      console.log("the server is listening on the port ");
+      console.log(`the server is listening on the port ${port}`);
     });
   })
   .catch((error) => {
