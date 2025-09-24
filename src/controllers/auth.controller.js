@@ -1,5 +1,9 @@
 import asyncHandler from "../utils/asyncHandler.js";
-import { emailVerificationContent, sendMail } from "../utils/mail.js";
+import {
+  emailVerificationContent,
+  forgetPasswordMailgenContent,
+  sendMail,
+} from "../utils/mail.js";
 import { User } from "../models/user.models.js";
 import { ApiError } from "../utils/apiError.js";
 import { ApiResponse } from "../utils/apiRsponse.js";
@@ -189,6 +193,7 @@ const verifyEmail = asyncHandler(async (req, res) => {
 });
 
 const resendEmail = asyncHandler(async (req, res) => {
+  // dout is here how do i acces the user if no middleware are there
   const user = await User.findById(req.user?._id);
   if (!user) {
     throw new ApiError(404, "user does not exist");
@@ -266,6 +271,88 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
   }
 });
 
+const forgotPassword = asyncHandler(async (req, res) => {
+  const { email } = req.body;
+  const user = await User.findOne({ email });
+  if (!user) {
+    throw new ApiError(404, "user does not exist");
+  }
+
+  // generate token
+  const { unHashedToken, hashedToken, tokenExpiry } =
+    user.generateTemporaryToken();
+
+  user.forgetPasswordToken = hashedToken;
+  user.expireForgetPassowrdToken = tokenExpiry;
+
+  await user.save({ validateBeforeSave: false });
+
+  // sned the email with token to rest password
+  await sendMail({
+    email: user?.email,
+    subject: "Reset you password",
+    mailgenContent: forgetPasswordMailgenContent(
+      user.userName,
+      `${req.protocol}://${req.get("Host")}/api/v1/users/rest-password/${unHashedToken}`,
+    ),
+  });
+
+  return res
+    .status(200)
+    .json(
+      new ApiResponse(
+        200,
+        {},
+        "pasword reset mail has been sent to your e-mail",
+      ),
+    );
+});
+
+const resetForgotPassword = asyncHandler(async (req, res) => {
+  const { resetToken } = req.params;
+  const { newPassword } = req.body;
+
+  let hashedToken = crypto
+    .createHash("sha256")
+    .update(resetToken)
+    .digest("hex");
+
+  const user = await User.findOne({
+    forgetPasswordToken: hashedToken,
+    expireForgetPassowrdToken: { $gt: Date.now() },
+  });
+
+  if (!user) {
+    throw new ApiError(489, "Token is invalid and expired");
+  }
+
+  user.forgetPasswordToken = undefined;
+  user.expireForgetPassowrdToken = undefined;
+  // now take the pass and update the db
+  user.password = newPassword;
+  user.save({ validateBeforeSave: false });
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, {}, "password reset successfully"));
+});
+
+const changePassword = asyncHandler(async (req, res) => {
+  const { oldpassword, newPassword } = req.body;
+  const user = await User.findById(req.user?._id);
+  const isOldPasswordCorrect = user.isPasswordCorrect(oldpassword);
+  if (!isOldPasswordCorrect) {
+    throw new ApiError(400, "invalid old password");
+  }
+
+  user.password = newPassword;
+  await user.save({ validateBeforeSave: false });
+
+  return res
+    .status(200)
+    .json(new ApiError(200, {}, "password changed successfully"));
+});
+
 export {
   registerUser,
   loginUser,
@@ -274,4 +361,7 @@ export {
   verifyEmail,
   resendEmail,
   refreshAccessToken,
+  forgotPassword,
+  resetForgotPassword,
+  changePassword,
 };
