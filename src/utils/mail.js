@@ -24,7 +24,7 @@ const sendMail = async (options) => {
   });
 
   const mail = {
-    from: "mail.taskmanager.com@gamil.com",
+    from: "khushbooyadav7964@gmail.com",
     to: options.email,
     subject: options.subject,
     text: emailTaxtual,
